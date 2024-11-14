@@ -1,0 +1,340 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Optimized Forum Models
+model ForumTag {
+  id    String      @id @default(cuid())
+  name  String      @unique
+  posts ForumPost[] @relation("PostTags")
+
+  @@map("forum_tags")
+}
+
+model ForumPost {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+
+  // Denormalized counters for better performance
+  viewCount    Int @default(0)
+  likeCount    Int @default(0)
+  dislikeCount Int @default(0)
+  commentCount Int @default(0)
+
+  // Relations
+  tags      ForumTag[]         @relation("PostTags")
+  createdBy User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  comments  ForumPostComment[]
+
+  // Materialized interaction records
+  interactions ForumPostInteraction[]
+
+  featured ForumFeaturedPost[]
+
+  @@index([createdById])
+  @@map("forum_posts")
+}
+
+// Consolidated interaction tracking
+model ForumPostInteraction {
+  id        String          @id @default(cuid())
+  postId    String
+  userId    String
+  type      InteractionType
+  createdAt DateTime        @default(now())
+
+  post ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId, type])
+  @@index([postId, type])
+  @@index([userId, type])
+  @@map("forum_post_interactions")
+}
+
+enum InteractionType {
+  VIEW
+  LIKE
+  DISLIKE
+}
+
+model ForumFeaturedPost {
+  postId    String
+  createdAt DateTime @default(now())
+
+  post ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([postId])
+  @@map("forum_featured_posts")
+}
+
+model ForumPostComment {
+  id          String   @id @default(cuid())
+  postId      String
+  body        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdBy User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([createdById])
+  @@map("forum_post_comments")
+}
+
+// Optimized Community Models
+model Community {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique // For URL-friendly paths
+  description String
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+
+  // Denormalized counters
+  memberCount    Int @default(0)
+  adminCount     Int @default(0)
+  moderatorCount Int @default(0)
+  totalPosts     Int @default(0)
+  totalComments  Int @default(0)
+
+  // Engagement metrics
+  weeklyActiveMembers  Int      @default(0)
+  monthlyActiveMembers Int      @default(0)
+  lastActivityAt       DateTime @default(now())
+
+  // Community health score (can be calculated based on various metrics)
+  engagementScore Float @default(0)
+
+  // Cached arrays for quick access (limit size in application logic)
+  recentMembers   Json? // Store last N members who joined
+  topContributors Json? // Store top N contributors
+
+  // Relations
+  createdBy User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  members   CommunityMember[]
+
+  // For efficient querying
+  visibility CommunityVisibility @default(PUBLIC)
+  status     CommunityStatus     @default(ACTIVE)
+
+  // Metadata for discovery
+  tags            String[]
+  category        String?
+  primaryLanguage String?
+
+  @@index([createdById])
+  @@index([status, visibility])
+  @@index([memberCount])
+  @@index([createdAt])
+  @@map("communities")
+}
+
+enum CommunityVisibility {
+  PUBLIC
+  PRIVATE
+  HIDDEN
+}
+
+enum CommunityStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum CommunityRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+model CommunityMember {
+  id           String        @default(cuid())
+  communityId  String
+  userId       String
+  role         CommunityRole @default(MEMBER)
+  joinedAt     DateTime      @default(now())
+  lastActiveAt DateTime      @default(now())
+
+  // Contribution metrics
+  totalPosts    Int @default(0)
+  totalComments Int @default(0)
+  reputation    Int @default(0)
+
+  // Moderation status
+  isBanned    Boolean   @default(false)
+  banReason   String?
+  bannedUntil DateTime?
+
+  // Activity tracking
+  lastPostAt    DateTime?
+  lastCommentAt DateTime?
+
+  // Relations
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([communityId, userId])
+  @@index([userId, role])
+  @@index([communityId, role])
+  @@map("community_members")
+}
+
+// Route Models
+model SavedTrip {
+  id          String @id @default(cuid())
+  name        String
+  origin      String
+  destination String
+  distance    Float
+  duration    Int
+  carbonSaved Float
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById])
+  @@map("saved_trips")
+}
+
+model UserTrip {
+  id          String   @id @default(cuid())
+  name        String
+  origin      String
+  destination String
+  distance    Float
+  duration    Int
+  carbonSaved Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById])
+  @@map("user_trips")
+}
+
+// Marketplace Models
+model RewardCategory {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  rewards Reward[]
+
+  @@map("reward_categories")
+}
+
+model Reward {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  points      Int
+  categoryId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    RewardCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  redemptions RewardRedemption[]
+
+  @@index([categoryId])
+  @@map("rewards")
+}
+
+model RewardRedemption {
+  rewardId   String
+  userId     String
+  redeemedAt DateTime @default(now())
+
+  reward Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([rewardId, userId])
+  @@map("reward_redemptions")
+}
+
+// Auth Models remain unchanged as they already use cuid
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? @db.Text
+  access_token             String? @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? @db.Text
+  session_state            String?
+  refresh_token_expires_in Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  rewardPoints  Int       @default(0)
+
+  // Auth relations
+  accounts Account[]
+  sessions Session[]
+
+  // Feature relations
+  forumPosts ForumPost[]
+
+  communities          Community[]
+  communityMembers     CommunityMember[]
+  comments             ForumPostComment[]
+  savedTrips           SavedTrip[]
+  userTrips            UserTrip[]
+  rewardRedemptions    RewardRedemption[]
+  ForumPostInteraction ForumPostInteraction[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}

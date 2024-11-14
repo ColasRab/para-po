@@ -1,0 +1,20 @@
+[
+    {
+        "name": "Metro Manila Commuters",
+        "description": "A community for daily commuters in Metro Manila to share experiences, tips, and discuss transportation issues.",
+        "createdById": "cm2niq9xv0000syijg6xdagdw",
+        "slug": "metro-manila-commuters"
+    },
+    {
+        "name": "PH Transport Innovations",
+        "description": "Discussing and promoting innovative transportation solutions for Philippine cities.",
+        "createdById": "cm2niq9xv0000syijg6xdagdw",
+        "slug": "ph-transport-innovations"
+    },
+    {
+        "name": "Bike Commuters Manila",
+        "description": "For cyclists who use their bikes for daily commute in Metro Manila. Share routes, safety tips, and advocacy efforts.",
+        "createdById": "cm2niq9xv0000syijg6xdagdw",
+        "slug": "bike-commuters-manila"
+    }
+]
