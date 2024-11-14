@@ -1,41 +1,41 @@
-import withPWA from 'next-pwa';
+import withPWA from "next-pwa";
+import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
 
 const pwaConfig = withPWA({
   dest: "public",
-  cacheOnFrontEndNav: process.env.NODE_ENV === 'production',
+  cacheOnFrontEndNav: process.env.NODE_ENV === "production",
   fallbacks: {
-    image: '/android-chrome-512x512.png',
-    font: '',
-    audio: '',
-    video: ''
+    image: "/android-chrome-512x512.png",
+    font: "",
+    audio: "",
+    video: "",
   },
   cacheStartUrl: true,
   skipWaiting: true,
-  scope: '/',
-  sw: '/sw.js',
-  cacheId: 'para-po',
+  scope: "/",
+  sw: "/sw.js",
+  cacheId: "para-po",
   cleanupOutdatedCaches: true,
   clientsClaim: true,
   navigationPreload: true,
   maximumFileSizeToCacheInBytes: 5_000_000,
   dynamicStartUrl: true,
-  disable: process.env.NODE_ENV === 'development',
+  disable: process.env.NODE_ENV === "development",
 });
-
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
   images: {
     domains: [
-      'lh3.googleusercontent.com'  // Add Google Photos domain
+      "lh3.googleusercontent.com", // Add Google Photos domain
     ],
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },
@@ -45,8 +45,19 @@ const nextConfig = {
     appDocumentPreloading: true,
     memoryBasedWorkersCount: true,
     optimisticClientCache: true,
-    optimizePackageImports: ["@shadcn/ui", "react-icons", "next-auth", "@prisma/client"],
+    optimizePackageImports: [
+      "@shadcn/ui",
+      "react-icons",
+      "next-auth",
+      "@prisma/client",
+    ],
     scrollRestoration: true,
+  },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.plugins = [...config.plugins, new PrismaPlugin()];
+    }
+    return config;
   },
 };
 
