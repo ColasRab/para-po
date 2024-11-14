@@ -1,40 +1,18 @@
-/*
-  Warnings:
+-- CreateEnum
+CREATE TYPE "InteractionType" AS ENUM ('VIEW', 'LIKE', 'DISLIKE');
 
-  - You are about to drop the `Account` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Post` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Session` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `VerificationToken` table. If the table is not empty, all the data it contains will be lost.
+-- CreateEnum
+CREATE TYPE "CommunityVisibility" AS ENUM ('PUBLIC', 'PRIVATE', 'HIDDEN');
 
-*/
--- DropForeignKey
-ALTER TABLE "Account" DROP CONSTRAINT "Account_userId_fkey";
+-- CreateEnum
+CREATE TYPE "CommunityStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'ARCHIVED');
 
--- DropForeignKey
-ALTER TABLE "Post" DROP CONSTRAINT "Post_createdById_fkey";
-
--- DropForeignKey
-ALTER TABLE "Session" DROP CONSTRAINT "Session_userId_fkey";
-
--- DropTable
-DROP TABLE "Account";
-
--- DropTable
-DROP TABLE "Post";
-
--- DropTable
-DROP TABLE "Session";
-
--- DropTable
-DROP TABLE "User";
-
--- DropTable
-DROP TABLE "VerificationToken";
+-- CreateEnum
+CREATE TYPE "CommunityRole" AS ENUM ('ADMIN', 'MODERATOR', 'MEMBER');
 
 -- CreateTable
 CREATE TABLE "forum_tags" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
 
     CONSTRAINT "forum_tags_pkey" PRIMARY KEY ("id")
@@ -42,58 +20,44 @@ CREATE TABLE "forum_tags" (
 
 -- CreateTable
 CREATE TABLE "forum_posts" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "body" TEXT NOT NULL,
     "image" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "createdById" TEXT NOT NULL,
+    "viewCount" INTEGER NOT NULL DEFAULT 0,
+    "likeCount" INTEGER NOT NULL DEFAULT 0,
+    "dislikeCount" INTEGER NOT NULL DEFAULT 0,
+    "commentCount" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "forum_posts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "forum_featured_posts" (
-    "id" SERIAL NOT NULL,
-    "postId" INTEGER NOT NULL,
+CREATE TABLE "forum_post_interactions" (
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "type" "InteractionType" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "forum_featured_posts_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "forum_post_interactions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "forum_post_likes" (
-    "id" SERIAL NOT NULL,
-    "postId" INTEGER NOT NULL,
-    "userId" TEXT NOT NULL,
+CREATE TABLE "forum_featured_posts" (
+    "postId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "forum_post_likes_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "forum_post_dislikes" (
-    "id" SERIAL NOT NULL,
-    "postId" INTEGER NOT NULL,
-    "userId" TEXT NOT NULL,
-
-    CONSTRAINT "forum_post_dislikes_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "forum_post_views" (
-    "id" SERIAL NOT NULL,
-    "postId" INTEGER NOT NULL,
-    "userId" TEXT NOT NULL,
-
-    CONSTRAINT "forum_post_views_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "forum_featured_posts_pkey" PRIMARY KEY ("postId")
 );
 
 -- CreateTable
 CREATE TABLE "forum_post_comments" (
-    "id" SERIAL NOT NULL,
-    "postId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
     "body" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -104,33 +68,63 @@ CREATE TABLE "forum_post_comments" (
 
 -- CreateTable
 CREATE TABLE "communities" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "image" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "createdById" TEXT NOT NULL,
+    "memberCount" INTEGER NOT NULL DEFAULT 0,
+    "adminCount" INTEGER NOT NULL DEFAULT 0,
+    "moderatorCount" INTEGER NOT NULL DEFAULT 0,
+    "totalPosts" INTEGER NOT NULL DEFAULT 0,
+    "totalComments" INTEGER NOT NULL DEFAULT 0,
+    "weeklyActiveMembers" INTEGER NOT NULL DEFAULT 0,
+    "monthlyActiveMembers" INTEGER NOT NULL DEFAULT 0,
+    "lastActivityAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "engagementScore" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "recentMembers" JSONB,
+    "topContributors" JSONB,
+    "visibility" "CommunityVisibility" NOT NULL DEFAULT 'PUBLIC',
+    "status" "CommunityStatus" NOT NULL DEFAULT 'ACTIVE',
+    "tags" TEXT[],
+    "category" TEXT,
+    "primaryLanguage" TEXT,
 
     CONSTRAINT "communities_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "community_members" (
-    "id" SERIAL NOT NULL,
-    "communityId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "communityId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "role" TEXT NOT NULL,
+    "role" "CommunityRole" NOT NULL DEFAULT 'MEMBER',
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastActiveAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "totalPosts" INTEGER NOT NULL DEFAULT 0,
+    "totalComments" INTEGER NOT NULL DEFAULT 0,
+    "reputation" INTEGER NOT NULL DEFAULT 0,
+    "isBanned" BOOLEAN NOT NULL DEFAULT false,
+    "banReason" TEXT,
+    "bannedUntil" TIMESTAMP(3),
+    "lastPostAt" TIMESTAMP(3),
+    "lastCommentAt" TIMESTAMP(3),
 
-    CONSTRAINT "community_members_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "community_members_pkey" PRIMARY KEY ("communityId","userId")
 );
 
 -- CreateTable
 CREATE TABLE "saved_trips" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "origin" TEXT NOT NULL,
     "destination" TEXT NOT NULL,
+    "distance" DOUBLE PRECISION NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "carbonSaved" DOUBLE PRECISION NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "createdById" TEXT NOT NULL,
@@ -140,10 +134,13 @@ CREATE TABLE "saved_trips" (
 
 -- CreateTable
 CREATE TABLE "user_trips" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "origin" TEXT NOT NULL,
     "destination" TEXT NOT NULL,
+    "distance" DOUBLE PRECISION NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "carbonSaved" DOUBLE PRECISION NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "createdById" TEXT NOT NULL,
@@ -153,7 +150,7 @@ CREATE TABLE "user_trips" (
 
 -- CreateTable
 CREATE TABLE "reward_categories" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
 
     CONSTRAINT "reward_categories_pkey" PRIMARY KEY ("id")
@@ -161,11 +158,11 @@ CREATE TABLE "reward_categories" (
 
 -- CreateTable
 CREATE TABLE "rewards" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "points" INTEGER NOT NULL,
-    "categoryId" INTEGER NOT NULL,
+    "categoryId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -174,12 +171,11 @@ CREATE TABLE "rewards" (
 
 -- CreateTable
 CREATE TABLE "reward_redemptions" (
-    "id" SERIAL NOT NULL,
-    "rewardId" INTEGER NOT NULL,
+    "rewardId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "redeemedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "reward_redemptions_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "reward_redemptions_pkey" PRIMARY KEY ("rewardId","userId")
 );
 
 -- CreateTable
@@ -231,9 +227,9 @@ CREATE TABLE "verification_tokens" (
 );
 
 -- CreateTable
-CREATE TABLE "_ForumPostToForumTag" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL
+CREATE TABLE "_PostTags" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
 );
 
 -- CreateIndex
@@ -243,34 +239,13 @@ CREATE UNIQUE INDEX "forum_tags_name_key" ON "forum_tags"("name");
 CREATE INDEX "forum_posts_createdById_idx" ON "forum_posts"("createdById");
 
 -- CreateIndex
-CREATE INDEX "forum_featured_posts_postId_idx" ON "forum_featured_posts"("postId");
+CREATE INDEX "forum_post_interactions_postId_type_idx" ON "forum_post_interactions"("postId", "type");
 
 -- CreateIndex
-CREATE INDEX "forum_post_likes_userId_idx" ON "forum_post_likes"("userId");
+CREATE INDEX "forum_post_interactions_userId_type_idx" ON "forum_post_interactions"("userId", "type");
 
 -- CreateIndex
-CREATE INDEX "forum_post_likes_postId_idx" ON "forum_post_likes"("postId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "forum_post_likes_postId_userId_key" ON "forum_post_likes"("postId", "userId");
-
--- CreateIndex
-CREATE INDEX "forum_post_dislikes_userId_idx" ON "forum_post_dislikes"("userId");
-
--- CreateIndex
-CREATE INDEX "forum_post_dislikes_postId_idx" ON "forum_post_dislikes"("postId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "forum_post_dislikes_postId_userId_key" ON "forum_post_dislikes"("postId", "userId");
-
--- CreateIndex
-CREATE INDEX "forum_post_views_userId_idx" ON "forum_post_views"("userId");
-
--- CreateIndex
-CREATE INDEX "forum_post_views_postId_idx" ON "forum_post_views"("postId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "forum_post_views_postId_userId_key" ON "forum_post_views"("postId", "userId");
+CREATE UNIQUE INDEX "forum_post_interactions_postId_userId_type_key" ON "forum_post_interactions"("postId", "userId", "type");
 
 -- CreateIndex
 CREATE INDEX "forum_post_comments_postId_idx" ON "forum_post_comments"("postId");
@@ -282,16 +257,25 @@ CREATE INDEX "forum_post_comments_createdById_idx" ON "forum_post_comments"("cre
 CREATE UNIQUE INDEX "communities_name_key" ON "communities"("name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "communities_slug_key" ON "communities"("slug");
+
+-- CreateIndex
 CREATE INDEX "communities_createdById_idx" ON "communities"("createdById");
 
 -- CreateIndex
-CREATE INDEX "community_members_userId_idx" ON "community_members"("userId");
+CREATE INDEX "communities_status_visibility_idx" ON "communities"("status", "visibility");
 
 -- CreateIndex
-CREATE INDEX "community_members_communityId_idx" ON "community_members"("communityId");
+CREATE INDEX "communities_memberCount_idx" ON "communities"("memberCount");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "community_members_communityId_userId_key" ON "community_members"("communityId", "userId");
+CREATE INDEX "communities_createdAt_idx" ON "communities"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "community_members_userId_role_idx" ON "community_members"("userId", "role");
+
+-- CreateIndex
+CREATE INDEX "community_members_communityId_role_idx" ON "community_members"("communityId", "role");
 
 -- CreateIndex
 CREATE INDEX "saved_trips_createdById_idx" ON "saved_trips"("createdById");
@@ -304,12 +288,6 @@ CREATE UNIQUE INDEX "reward_categories_name_key" ON "reward_categories"("name");
 
 -- CreateIndex
 CREATE INDEX "rewards_categoryId_idx" ON "rewards"("categoryId");
-
--- CreateIndex
-CREATE INDEX "reward_redemptions_userId_idx" ON "reward_redemptions"("userId");
-
--- CreateIndex
-CREATE INDEX "reward_redemptions_rewardId_idx" ON "reward_redemptions"("rewardId");
 
 -- CreateIndex
 CREATE INDEX "accounts_userId_idx" ON "accounts"("userId");
@@ -333,34 +311,22 @@ CREATE UNIQUE INDEX "verification_tokens_token_key" ON "verification_tokens"("to
 CREATE UNIQUE INDEX "verification_tokens_identifier_token_key" ON "verification_tokens"("identifier", "token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_ForumPostToForumTag_AB_unique" ON "_ForumPostToForumTag"("A", "B");
+CREATE UNIQUE INDEX "_PostTags_AB_unique" ON "_PostTags"("A", "B");
 
 -- CreateIndex
-CREATE INDEX "_ForumPostToForumTag_B_index" ON "_ForumPostToForumTag"("B");
+CREATE INDEX "_PostTags_B_index" ON "_PostTags"("B");
 
 -- AddForeignKey
 ALTER TABLE "forum_posts" ADD CONSTRAINT "forum_posts_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "forum_post_interactions" ADD CONSTRAINT "forum_post_interactions_postId_fkey" FOREIGN KEY ("postId") REFERENCES "forum_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "forum_post_interactions" ADD CONSTRAINT "forum_post_interactions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "forum_featured_posts" ADD CONSTRAINT "forum_featured_posts_postId_fkey" FOREIGN KEY ("postId") REFERENCES "forum_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_post_likes" ADD CONSTRAINT "forum_post_likes_postId_fkey" FOREIGN KEY ("postId") REFERENCES "forum_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_post_likes" ADD CONSTRAINT "forum_post_likes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_post_dislikes" ADD CONSTRAINT "forum_post_dislikes_postId_fkey" FOREIGN KEY ("postId") REFERENCES "forum_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_post_dislikes" ADD CONSTRAINT "forum_post_dislikes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_post_views" ADD CONSTRAINT "forum_post_views_postId_fkey" FOREIGN KEY ("postId") REFERENCES "forum_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_post_views" ADD CONSTRAINT "forum_post_views_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "forum_post_comments" ADD CONSTRAINT "forum_post_comments_postId_fkey" FOREIGN KEY ("postId") REFERENCES "forum_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -399,7 +365,7 @@ ALTER TABLE "accounts" ADD CONSTRAINT "accounts_userId_fkey" FOREIGN KEY ("userI
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_ForumPostToForumTag" ADD CONSTRAINT "_ForumPostToForumTag_A_fkey" FOREIGN KEY ("A") REFERENCES "forum_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_PostTags" ADD CONSTRAINT "_PostTags_A_fkey" FOREIGN KEY ("A") REFERENCES "forum_posts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_ForumPostToForumTag" ADD CONSTRAINT "_ForumPostToForumTag_B_fkey" FOREIGN KEY ("B") REFERENCES "forum_tags"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_PostTags" ADD CONSTRAINT "_PostTags_B_fkey" FOREIGN KEY ("B") REFERENCES "forum_tags"("id") ON DELETE CASCADE ON UPDATE CASCADE;
