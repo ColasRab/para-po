@@ -1,6 +1,5 @@
 "use client";
 
-import { FeaturedForumData, ForumData } from "@/app/forum/page";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
-import { Community, ForumTag } from "@prisma/client";
 import {
   Eye,
   Filter,
@@ -46,10 +44,14 @@ import { useState } from "react";
 
 interface ForumTemplateProps {
   props: {
-    forumPosts: ForumData;
-    featured: FeaturedForumData;
-    communities: Community[];
-    tagData: ForumTag[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    forumPosts: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    featured: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    communities: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tagData: any[];
   };
 }
 
@@ -60,7 +62,8 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
-    sortBy: "newest",
+    sortBy: "newest",    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     tags: [""],
     answered: false,
     unanswered: false,
@@ -331,7 +334,7 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
                 </div>
               </CardHeader>
               <CardContent>
-                {forumPosts.map((post, index) => (
+                {forumPosts.map((post: any, index: any) => (
                   <div
                     key={index}
                     className="mb-4 p-4 bg-white rounded-lg shadow transition-all duration-200 hover:shadow-md"
@@ -384,7 +387,7 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {post.tags.map((tag, tagIndex) => (
+                      {post.tags.map((tag: any, tagIndex: any) => (
                         <Badge
                           key={tagIndex}
                           variant="secondary"

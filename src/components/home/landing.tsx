@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, KeyboardEvent } from "react";
 import LandingAnimation from "@/components/home/animation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Spline from "@splinetool/react-spline";
-import { Search, MapPin, MessageCircle, Clock, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import debounce from "lodash/debounce";
+import { Clock, Loader2, MapPin, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { KeyboardEvent, useCallback, useEffect, useState } from "react";
 
 interface Location {
   name: string;
@@ -17,12 +16,11 @@ interface Location {
 }
 
 export default function Landing() {
-  const router = useRouter();
   const [destination, setDestination] = useState("");
   const [suggestions, setSuggestions] = useState<Location[]>([]);
   const [isMobile, setIsMobile] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
-  const [locationError, setLocationError] = useState("");
+  const [isLocating,] = useState(false);
+  const [locationError,] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
@@ -49,6 +47,7 @@ export default function Landing() {
         );
         const data = await response.json();
         setSuggestions(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           data.map((item: any) => ({
             name: item.display_name,
             lat: parseFloat(item.lat),
