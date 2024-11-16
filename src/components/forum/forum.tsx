@@ -1,22 +1,48 @@
-'use client';
+"use client";
 
 import { FeaturedForumData, ForumData } from "@/app/forum/page";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import axios from "@/lib/axios";
+import axios from "axios";
 import { Community, ForumTag } from "@prisma/client";
-import { Eye, Filter, MessageSquare, PlusCircle, Search, Share2, Tag, ThumbsDown, ThumbsUp, TrendingUp, Users } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import {
+  Eye,
+  Filter,
+  MessageSquare,
+  PlusCircle,
+  Search,
+  Share2,
+  Tag,
+  ThumbsDown,
+  ThumbsUp,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from 'react';
+import { useState } from "react";
 
 interface ForumTemplateProps {
   props: {
@@ -27,27 +53,32 @@ interface ForumTemplateProps {
   };
 }
 
-const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPosts, communities, tagData, featured } }) => {
+const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
+  props: { forumPosts, communities, tagData, featured },
+}) => {
   const { data: session } = useSession();
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
-    sortBy: 'newest',
+    sortBy: "newest",
     tags: [""],
     answered: false,
     unanswered: false,
   });
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [tags, setTags] = useState('');
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [tags, setTags] = useState("");
 
-  const handleFilterChange: (key: string, value: string | string[]) => void = (key, value) => {
-    setSelectedFilters(prev => ({ ...prev, [key]: value }));
+  const handleFilterChange: (key: string, value: string | string[]) => void = (
+    key,
+    value
+  ) => {
+    setSelectedFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const applyFilters = () => {
     // In a real application, you would apply these filters to your data
-    console.log('Applying filters:', selectedFilters);
+    console.log("Applying filters:", selectedFilters);
     setIsFilterOpen(false);
   };
 
@@ -55,27 +86,66 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
     e.preventDefault();
 
     if (!session) {
-      alert('You must be logged in to post a discussion');
+      alert("You must be logged in to post a discussion");
       return;
     }
 
     try {
-      const response = await axios.post('/forum/post-discussion', {
+      const response = await axios.post("/forum/post-discussion", {
         title,
         body,
-        tags: tags.split(',').map(tag => tag.trim()),
+        tags: tags.split(",").map((tag) => tag.trim()),
       });
 
       if (response.status === 201) {
-        alert('Discussion posted successfully');
+        alert("Discussion posted successfully");
         setIsContributeOpen(false);
-        setTitle('');
-        setBody('');
-        setTags('');
+        setTitle("");
+        setBody("");
+        setTags("");
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to post discussion');
+      alert("Failed to post discussion");
+    }
+  };
+
+  const createPostFromFacebook = async (post: { message: string }) => {
+    if (!session) {
+      console.error("You must be logged in to create a post");
+      return;
+    }
+
+    try {
+      const response = await axios.post("/forum/post-discussion", {
+        title: post.message,
+        body: post.message,
+        tags: ["Facebook"],
+      });
+
+      if (response.status === 201) {
+        console.log("Facebook post created successfully");
+      }
+    } catch (error) {
+      console.error("Failed to create post from Facebook:", error);
+    }
+  };
+
+  const handleScrapeFacebookPosts = async () => {
+    try {
+      const response = await axios.post("/api/fb/scrapper");
+      console.log("Scrape results:", response.data);
+      if (response.data.success) {
+        alert("Facebook posts scraped and saved successfully!");
+      } else {
+        alert(`Failed to scrape some posts: ${response.data.message}`);
+      }
+    } catch (error) {
+      console.error("Error scraping Facebook posts:", error);
+      alert(
+        "Failed to scrape Facebook posts: " +
+          ((error as any).response?.data?.message || (error as any).message)
+      );
     }
   };
 
@@ -84,42 +154,58 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
   return (
     <div className="min-h-screen bg-[url('/forum-bg.jpg')] bg-no-repeat bg-cover bg-fixed">
       <main className="bg-white container mx-auto p-4 space-y-4">
-        {
-          featured &&
+        {featured && (
           <Card className="bg-white shadow-lg border-2 border-blue-200">
             <CardHeader>
-              <CardTitle className="text-2xl text-blue-600">Featured Discussion</CardTitle>
+              <CardTitle className="text-2xl text-blue-600">
+                Featured Discussion
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-grow">
-                  <h3 className="font-semibold text-xl mb-2">{
-                    featuredPost?.title
-                  }</h3>
-                  <p className="text-gray-600 mb-4">
-                    {featuredPost?.body}
-                  </p>
+                  <h3 className="font-semibold text-xl mb-2">
+                    {featuredPost?.title}
+                  </h3>
+                  <p className="text-gray-600 mb-4">{featuredPost?.body}</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Avatar className="w-8 h-8 mr-2">
-                        <AvatarImage src={featuredPost?.createdBy.image || ""} alt={featuredPost?.createdBy.name || ""} />
-                        <AvatarFallback>{featuredPost?.createdBy.name?.charAt(0) || ""}</AvatarFallback>
+                        <AvatarImage
+                          src={featuredPost?.createdBy.image || ""}
+                          alt={featuredPost?.createdBy.name || ""}
+                        />
+                        <AvatarFallback>
+                          {featuredPost?.createdBy.name?.charAt(0) || ""}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">{featuredPost?.createdBy.name}</span>
-                        <span className="text-xs text-gray-500">{new Date(featuredPost?.createdAt || "").toLocaleString()}</span>
+                        <span className="text-sm font-medium">
+                          {featuredPost?.createdBy.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(
+                            featuredPost?.createdAt || ""
+                          ).toLocaleString()}
+                        </span>
                       </div>
                     </div>
                     <Badge variant="secondary">Hot Topic</Badge>
                   </div>
                 </div>
                 <div className="md:w-1/4 flex-shrink-0">
-                  <Image src="/placeholder.svg?height=150&width=200" width={200} height={150} alt="Featured discussion" className="w-full h-auto rounded-lg object-cover" />
+                  <Image
+                    src="/placeholder.svg?height=150&width=200"
+                    width={200}
+                    height={150}
+                    alt="Featured discussion"
+                    className="w-full h-auto rounded-lg object-cover"
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
-        }
+        )}
 
         <div className="lg:hidden mb-4">
           <Card>
@@ -144,13 +230,23 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
               <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
                 <CardTitle>Recent Discussions</CardTitle>
                 <div className="flex flex-wrap gap-2 justify-end">
-                  <Dialog open={isContributeOpen} onOpenChange={setIsContributeOpen}>
+                  <Dialog
+                    open={isContributeOpen}
+                    onOpenChange={setIsContributeOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button>
                         <PlusCircle className="w-4 h-4 mr-2" />
                         Contribute
                       </Button>
                     </DialogTrigger>
+                    <Button
+                      onClick={handleScrapeFacebookPosts}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Scrape Facebook Posts
+                    </Button>
                     <DialogContent className="sm:max-w-[600px] w-full">
                       <DialogHeader>
                         <DialogTitle>Create a New Discussion</DialogTitle>
@@ -161,22 +257,35 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
                       <form onSubmit={handleSubmit}>
                         <div className="grid gap-4 py-4">
                           <div className="grid gap-2">
-                            <Label htmlFor="title">
-                              Title
-                            </Label>
-                            <Input id="title" className="w-full" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                            <Label htmlFor="title">Title</Label>
+                            <Input
+                              id="title"
+                              className="w-full"
+                              value={title}
+                              onChange={(e) => setTitle(e.target.value)}
+                              required
+                            />
                           </div>
                           <div className="grid gap-2">
-                            <Label htmlFor="description">
-                              Description
-                            </Label>
-                            <Textarea id="description" className="w-full min-h-[200px]" placeholder="Provide a detailed description of your discussion topic..." value={body} onChange={(e) => setBody(e.target.value)} required />
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                              id="description"
+                              className="w-full min-h-[200px]"
+                              placeholder="Provide a detailed description of your discussion topic..."
+                              value={body}
+                              onChange={(e) => setBody(e.target.value)}
+                              required
+                            />
                           </div>
                           <div className="grid gap-2">
-                            <Label htmlFor="tags">
-                              Tags
-                            </Label>
-                            <Input id="tags" className="w-full" placeholder="Separate tags with commas" value={tags} onChange={(e) => setTags(e.target.value)} />
+                            <Label htmlFor="tags">Tags</Label>
+                            <Input
+                              id="tags"
+                              className="w-full"
+                              placeholder="Separate tags with commas"
+                              value={tags}
+                              onChange={(e) => setTags(e.target.value)}
+                            />
                           </div>
                         </div>
                         <DialogFooter>
@@ -204,15 +313,21 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
                           <Label>Sort by</Label>
                           <Select
                             value={selectedFilters.sortBy}
-                            onValueChange={(value) => handleFilterChange('sortBy', value)}
+                            onValueChange={(value) =>
+                              handleFilterChange("sortBy", value)
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="newest">Newest</SelectItem>
-                              <SelectItem value="active">Most Active</SelectItem>
-                              <SelectItem value="votes">Highest Votes</SelectItem>
+                              <SelectItem value="active">
+                                Most Active
+                              </SelectItem>
+                              <SelectItem value="votes">
+                                Highest Votes
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -222,27 +337,38 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
                             id="tags"
                             className="w-full"
                             placeholder="Separate tags with commas"
-                            value={selectedFilters.tags.join(',')}
-                            onChange={(e) => handleFilterChange('tags', e.target.value.split(',').map(tag => tag.trim()))}
+                            value={selectedFilters.tags.join(",")}
+                            onChange={(e) =>
+                              handleFilterChange(
+                                "tags",
+                                e.target.value
+                                  .split(",")
+                                  .map((tag) => tag.trim())
+                              )
+                            }
                           />
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button type="submit" onClick={applyFilters}>Apply Filters</Button>
+                        <Button type="submit" onClick={applyFilters}>
+                          Apply Filters
+                        </Button>
                       </DialogFooter>
                     </DialogContent>
-
                   </Dialog>
                 </div>
               </CardHeader>
               <CardContent>
                 {forumPosts.map((post, index) => (
-                  <div key={index} className="mb-4 p-4 bg-white rounded-lg shadow transition-all duration-200 hover:shadow-md">
+                  <div
+                    key={index}
+                    className="mb-4 p-4 bg-white rounded-lg shadow transition-all duration-200 hover:shadow-md"
+                  >
                     <h3 className="font-semibold text-lg mb-2">
                       <Link href={`/forum/post/${post.id}`}>{post.title}</Link>
                     </h3>
                     <p className="text-gray-600 mb-2 line-clamp-3">
-                      {post.body}{' '}
+                      {post.body}{" "}
                     </p>
                     <div className="flex flex-wrap items-center justify-between text-sm text-gray-500 mb-2">
                       <div className="flex flex-wrap items-center gap-4">
@@ -267,18 +393,31 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
                       </div>
                       <div className="flex items-center mt-2 sm:mt-0">
                         <Avatar className="w-8 h-8 mr-2">
-                          <AvatarImage src={post.createdBy.image || ""} alt={post.createdBy.name || ""} />
-                          <AvatarFallback>{post.createdBy.name?.charAt(0) || ""}</AvatarFallback>
+                          <AvatarImage
+                            src={post.createdBy.image || ""}
+                            alt={post.createdBy.name || ""}
+                          />
+                          <AvatarFallback>
+                            {post.createdBy.name?.charAt(0) || ""}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{post.createdBy.name}</span>
-                          <span className="text-xs">{new Date(post.createdAt).toLocaleString()}</span>
+                          <span className="text-sm font-medium">
+                            {post.createdBy.name}
+                          </span>
+                          <span className="text-xs">
+                            {new Date(post.createdAt).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {post.tags.map((tag, tagIndex) => (
-                        <Badge key={tagIndex} variant="secondary" className="text-xs">
+                        <Badge
+                          key={tagIndex}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           <Tag className="w-3 h-3 mr-1" />
                           {tag.name}
                         </Badge>
@@ -319,7 +458,8 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
                 <div className="flex flex-wrap gap-2">
                   {tagData.map((tag, index) => (
                     <Button key={index} variant="outline" size="sm">
-                      <Tag className="w-3 h-3 mr-1" />{tag.name}
+                      <Tag className="w-3 h-3 mr-1" />
+                      {tag.name}
                     </Button>
                   ))}
                 </div>
@@ -335,20 +475,29 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
                   {communities.map((community, index) => (
                     <div key={index} className="flex items-start space-x-4">
                       <Avatar>
-                        <AvatarImage src={community.image || ""} alt={community.name} />
-                        <AvatarFallback>{community.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage
+                          src={community.image || ""}
+                          alt={community.name}
+                        />
+                        <AvatarFallback>
+                          {community.name.charAt(0)}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <Link href={community.slug}>
                           <h3 className="font-semibold">{community.name}</h3>
                         </Link>
-                        <p className="text-sm text-gray-500 line-clamp-2">{community.description}</p>
+                        <p className="text-sm text-gray-500 line-clamp-2">
+                          {community.description}
+                        </p>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-gray-500">
                             <Users className="inline w-4 h-4 mr-1" />
                             {community.memberCount} members
                           </span>
-                          <Button variant="outline" size="sm">Join</Button>
+                          <Button variant="outline" size="sm">
+                            Join
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -363,7 +512,11 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {['NAIA Airport Link', 'Pasig River Ferry', 'Bike Lanes Expansion'].map((topic, index) => (
+                  {[
+                    "NAIA Airport Link",
+                    "Pasig River Ferry",
+                    "Bike Lanes Expansion",
+                  ].map((topic, index) => (
                     <li key={index} className="flex items-center">
                       <TrendingUp className="w-4 h-4 mr-2 text-red-500" />
                       <span>{topic}</span>
@@ -385,4 +538,4 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({ props: { forumPo
   );
 };
 
-export { ForumTemplateComponent };
+export default ForumTemplateComponent;
