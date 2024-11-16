@@ -198,7 +198,7 @@ export async function scrapeFacebookPosts(pageUrl: string): Promise<FacebookPost
           if (!isNaN(date.getTime())) {
             return date.toISOString();
           }
-        } catch (e) {
+        } catch {
           console.log('Error parsing date:', timeText);
         }
         
