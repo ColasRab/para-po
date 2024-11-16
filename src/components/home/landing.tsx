@@ -30,7 +30,6 @@ export default function Landing() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
     };
-
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -42,28 +41,21 @@ export default function Landing() {
         setSuggestions([]);
         return;
       }
-
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
             searchText
           )}&limit=5`
         );
-        const data = (await response.json()) as {
-          display_name: string;
-          lat: string;
-          lon: string;
-        }[];
-
+        const data = await response.json();
         setSuggestions(
-          data.map((item) => ({
+          data.map((item: any) => ({
             name: item.display_name,
             lat: parseFloat(item.lat),
             lon: parseFloat(item.lon),
           }))
         );
         setShowSuggestions(true);
-        setSelectedIndex(-1); // Reset selection when new suggestions arrive
       } catch (error) {
         console.error("Error fetching suggestions:", error);
         setSuggestions([]);
@@ -76,97 +68,32 @@ export default function Landing() {
     fetchSuggestions(destination);
   }, [destination, fetchSuggestions]);
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions || suggestions.length === 0) return;
+  const handleSuggestionClick = (suggestion: Location) => {
+    setDestination(suggestion.name);
+    setShowSuggestions(false);
+    // Handle the suggestion click (e.g., navigate to a new page or update the state)
+  };
 
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (selectedIndex >= 0) {
-          handleSuggestionClick(suggestions[selectedIndex]);
-        }
-        break;
-      case "Escape":
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
-        break;
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      setSelectedIndex((prevIndex) =>
+        prevIndex < suggestions.length - 1 ? prevIndex + 1 : prevIndex
+      );
+    } else if (e.key === "ArrowUp") {
+      setSelectedIndex((prevIndex) =>
+        prevIndex > 0 ? prevIndex - 1 : prevIndex
+      );
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      handleSuggestionClick(suggestions[selectedIndex]);
     }
   };
 
-  const getUserLocation = async (selectedDestination: string) => {
-    setIsLocating(true);
-    setLocationError("");
-
-    try {
-      const position = await new Promise<GeolocationPosition>(
-        (resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        }
-      );
-
-      // Reverse geocode the coordinates to get the address
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`
-      );
-      const data = await response.json();
-
-      // Navigate to the route page with both origin and destination
-      if (selectedDestination) {
-        const params = new URLSearchParams({
-          originLat: position.coords.latitude.toString(),
-          originLon: position.coords.longitude.toString(),
-          originName: data.display_name,
-          destination: selectedDestination,
-        });
-
-        router.push(`/route?${params.toString()}`);
-      }
-    } catch (error) {
-      console.error("Error getting location:", error);
-      setLocationError(
-        "Unable to get your location. Please allow location access and try again."
-      );
-    } finally {
-      setIsLocating(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (destination) {
-      await getUserLocation(destination);
+      // Handle form submission (e.g., navigate to a new page or update the state)
     }
   };
-
-  const handleSuggestionClick = async (suggestion: Location) => {
-    setDestination(suggestion.name);
-    setSuggestions([]);
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
-    await getUserLocation(suggestion.name);
-  };
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowSuggestions(false);
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
@@ -184,7 +111,6 @@ export default function Landing() {
             <LandingAnimation />
           </div>
         </div>
-
         <div className="w-full px-4 lg:px-0 space-y-6">
           <div className="text-center mb-4">
             <h2 className="text-2xl font-semibold text-gray-800">
@@ -194,58 +120,50 @@ export default function Landing() {
               Enter your destination to get started
             </p>
           </div>
-
-          <form
-            onSubmit={handleSubmit}
-            className="flex w-full max-w-sm mx-auto items-center space-x-2 relative"
-          >
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <form onSubmit={handleSubmit}>
+            <div className="relative">
               <Input
-                type="text"
-                placeholder="Where are you going?"
+                placeholder="Enter destination"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="pl-10"
                 onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+                className="w-full bg-white"
               />
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute w-full mt-1 bg-white rounded-md shadow-lg z-50 max-h-48 overflow-auto">
                   {suggestions.map((suggestion, index) => (
                     <div
                       key={index}
-                      className={`px-4 py-2 cursor-pointer ${
-                        index === selectedIndex
-                          ? "bg-blue-100 text-blue-900"
-                          : "hover:bg-gray-100"
+                      className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
+                        index === selectedIndex ? "bg-gray-200" : ""
                       }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSuggestionClick(suggestion);
-                      }}
+                      onMouseDown={() => handleSuggestionClick(suggestion)}
                     >
                       {suggestion.name}
                     </div>
                   ))}
                 </div>
               )}
+              <Button
+                type="submit"
+                disabled={!destination || isLocating}
+                className="relative mt-4"
+              >
+                {isLocating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Go"
+                )}
+              </Button>
             </div>
-            <Button
-              type="submit"
-              disabled={!destination || isLocating}
-              className="relative"
-            >
-              {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Go"}
-            </Button>
           </form>
-
           {locationError && (
             <div className="text-red-500 text-sm text-center">
               {locationError}
             </div>
           )}
-
           {isMobile && (
             <>
               <div className="grid grid-cols-2 gap-4 mt-8 max-w-sm mx-auto">
@@ -259,14 +177,13 @@ export default function Landing() {
                 <Link href="/forum" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full flex items-center justify-center space-x-2 py-6"
+                    className="flex items-center justify-center space-x-2 py-6"
                   >
                     <MessageCircle className="h-5 w-5" />
                     <span>Latest Updates</span>
                   </Button>
                 </Link>
               </div>
-
               <div className="mt-8 max-w-sm mx-auto">
                 <h3 className="text-sm font-medium text-gray-500 mb-3">
                   Recent Searches
@@ -292,9 +209,8 @@ export default function Landing() {
           )}
         </div>
       </div>
-
       {!isMobile && (
-        <div className="w-full lg:w-2/3 h-[50vh] lg:h-screen flex justify-center overflow-hidden items-center">
+        <div className="w-full lg:w-2/3 h-[50vh] lg:h-full">
           <Spline
             scene="https://prod.spline.design/zpMJQkPWSrM6Shpm/scene.splinecode"
             className="w-full h-full"
