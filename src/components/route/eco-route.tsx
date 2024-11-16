@@ -8,7 +8,15 @@ import type { LatLngTuple } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import debounce from "lodash/debounce";
-import { Bike, Bus, Car, Leaf, PersonStanding } from "lucide-react";
+import {
+  Bike,
+  Bus,
+  Car,
+  ChevronDown,
+  ChevronUp,
+  Leaf,
+  PersonStanding,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -351,6 +359,26 @@ const EcoRoute: React.FC = () => {
     return R * c;
   };
 
+  const [isExpanded, setIsExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    dragStartY.current = e.clientY;
+  };
+
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    if (dragStartY.current === null) return;
+    const dragDistance = e.clientY - dragStartY.current;
+    if (dragDistance > 50) {
+      setIsExpanded(false);
+    }
+  };
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   useEffect(() => {
     if (searchParams) {
       const originLat = searchParams.get("originLat");
@@ -611,12 +639,44 @@ const EcoRoute: React.FC = () => {
 
   return (
     <div className="h-screen w-full relative flex flex-col md:flex-row">
-      <div className="w-full md:w-96 h-auto md:h-full z-[1000] overflow-auto order-2 md:order-1">
-        <Card className="rounded-none shadow-xl h-full">
+      <div className="flex-1 h-full w-full order-1">
+        <MapWithNoSSR
+          routes={routes}
+          activeMode={selectedMode}
+          markers={markers}
+          initialConfig={INITIAL_MAP_CONFIG}
+        />
+      </div>
+      <div
+        className={`absolute bottom-0 left-0 right-0 z-[1000] transition-all duration-300 ease-in-out
+                    ${isExpanded ? "h-[calc(100%-4rem)]" : "h-auto"}`}
+        style={{
+          transform: isExpanded
+            ? "translateY(0)"
+            : "translateY(calc(100% - 10rem))",
+        }}
+      >
+        <Card
+          className="rounded-t-xl shadow-xl h-full"
+          ref={cardRef}
+          draggable
+          onDragStart={handleDragStart}
+          onDrag={handleDrag}
+        >
+          <div
+            className="flex justify-center p-2 cursor-pointer"
+            onClick={toggleExpand}
+          >
+            {isExpanded ? (
+              <ChevronDown className="w-6 h-6" />
+            ) : (
+              <ChevronUp className="w-6 h-6" />
+            )}
+          </div>
           <CardHeader>
             <CardTitle>Para Po Route</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 overflow-auto">
             {error && (
               <div className="p-2 bg-red-100 text-red-700 rounded-md">
                 {error}
@@ -627,7 +687,10 @@ const EcoRoute: React.FC = () => {
               <LocationSearch
                 placeholder="Enter origin location"
                 value={originValue}
-                onChange={setOriginValue}
+                onChange={(value) => {
+                  setOriginValue(value);
+                  setIsExpanded(true);
+                }}
                 onSelect={setOriginLocation}
                 disabled={isLoading}
               />
@@ -635,7 +698,10 @@ const EcoRoute: React.FC = () => {
               <LocationSearch
                 placeholder="Enter destination location"
                 value={destinationValue}
-                onChange={setDestinationValue}
+                onChange={(value) => {
+                  setDestinationValue(value);
+                  setIsExpanded(true);
+                }}
                 onSelect={setDestinationLocation}
                 disabled={isLoading}
               />
@@ -674,7 +740,7 @@ const EcoRoute: React.FC = () => {
               </Button>
             </div>
 
-            {routeInfo && (
+            {isExpanded && routeInfo && (
               <div className="space-y-4 mt-4">
                 <RouteInfoCard
                   icon={getTransportIcon(selectedMode)}
@@ -711,22 +777,15 @@ const EcoRoute: React.FC = () => {
               </div>
             )}
 
-            {selectedMode === TransportMode.BIKE && routeInfo?.hasBikeLane && (
-              <div className="p-2 mt-4 bg-green-100 text-green-700 rounded-md">
-                🚴 This route includes bike lanes!
-              </div>
-            )}
+            {isExpanded &&
+              selectedMode === TransportMode.BIKE &&
+              routeInfo?.hasBikeLane && (
+                <div className="p-2 mt-4 bg-green-100 text-green-700 rounded-md">
+                  🚴 This route includes bike lanes!
+                </div>
+              )}
           </CardContent>
         </Card>
-      </div>
-
-      <div className="flex-1 h-[50vh] md:h-full w-full order-1 md:order-2">
-        <MapWithNoSSR
-          routes={routes}
-          activeMode={selectedMode}
-          markers={markers}
-          initialConfig={INITIAL_MAP_CONFIG}
-        />
       </div>
     </div>
   );

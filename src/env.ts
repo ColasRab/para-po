@@ -7,6 +7,7 @@ export const env = createEnv({
         GOOGLE_ID: z.string(),
         GOOGLE_SECRET: z.string(),
         NEXTAUTH_SECRET: z.string(),
+        FB_ACCESS_TOKEN: z.string(),
     },
     client: {
         NEXT_PUBLIC_GOOGLE_MAP_API: z.string(),
@@ -19,5 +20,6 @@ export const env = createEnv({
         NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
         NEXT_PUBLIC_GOOGLE_MAP_API: process.env.NEXT_PUBLIC_GOOGLE_MAP_API,
         NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+        FB_ACCESS_TOKEN: process.env.FB_ACCESS_TOKEN,
     },
 });
