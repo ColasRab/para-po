@@ -124,7 +124,7 @@ const Map: React.FC<{
 };
 
 const CO2_EMISSIONS = {
-  CAR: 192, // Average car emissions g/km
+  CAR: 132, // Average car emissions g/km
   BIKE: 0,
   WALK: 0,
 };

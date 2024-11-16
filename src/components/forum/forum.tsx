@@ -337,7 +337,7 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
                     className="mb-4 p-4 bg-white rounded-lg shadow transition-all duration-200 hover:shadow-md"
                   >
                     <h3 className="font-semibold text-lg mb-2">
-                      <Link href={`/forum/post/${post.id}`}>{post.title}</Link>
+                      <Link href={`/forum/${post.id}`}>{post.title}</Link>
                     </h3>
                     <p className="text-gray-600 mb-2 line-clamp-3">
                       {post.body}{" "}
