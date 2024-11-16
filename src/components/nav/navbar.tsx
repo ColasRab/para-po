@@ -1,8 +1,11 @@
 "use client";
+
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FaRoute } from "react-icons/fa";
 import { FaHouse, FaPeopleGroup, FaShop } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
@@ -40,14 +43,23 @@ const navLinks: NavLink[] = [
 
 const NavBar: React.FC = () => {
   const { status } = useSession();
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const closeSheet = useCallback(() => setIsOpen(false), []);
+
   return (
-    <header className="sticky flex backdrop-blur-2xl justify-center bg-background top-0 left-0 z-50 w-full shadow-sm dark:bg-gray-950 dark:text-gray-50">
+    <header className="sticky flex backdrop-blur-2xl justify-center bg-background top-0 left-0 z-[2000] w-full shadow-sm dark:bg-gray-950 dark:text-gray-50">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button className="md:hidden" size="icon" variant="outline">
+            <Button
+              className="md:hidden"
+              size="icon"
+              variant="outline"
+              aria-label="Toggle navigation menu"
+            >
               <MenuIcon className="h-6 w-6" />
-              <span className="sr-only">Toggle navigation menu</span>
             </Button>
           </SheetTrigger>
 
@@ -56,14 +68,17 @@ const NavBar: React.FC = () => {
             <span className="text-lg font-semibold">Para Po!</span>
           </Link>
 
-          <SheetContent side="left" className="bg-white">
+          <SheetContent side="left" className="bg-white z-[2001]">
             <div className="flex flex-col justify-between h-full">
               <div className="grid gap-4 p-4">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="font-medium hover:underline flex gap-4 items-center"
+                    className={`font-medium hover:underline flex gap-4 items-center ${
+                      pathname === link.href ? "text-primary" : ""
+                    }`}
+                    onClick={closeSheet}
                   >
                     {link.icon}
                     {link.name}
@@ -79,33 +94,20 @@ const NavBar: React.FC = () => {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium hover:underline"
+                className={`text-sm font-medium hover:underline ${
+                  pathname === link.href ? "text-primary" : ""
+                }`}
               >
                 {link.name}
               </Link>
             ))}
-            {status === "authenticated" ? (
-              <Link href="/profile">
-                <AvatarComponent />
-              </Link>
-            ) : (
-              <Button
-                className="w-full items-center"
-                size="lg"
-                variant="outline"
-                onClick={() => signIn("google")}
-              >
-                <FcGoogle className="h-12 w-12" />
-                Signin
-              </Button>
-            )}
           </nav>
         </div>
         <Link className="flex items-center gap-2 md:hidden" href="/">
           <Logo dimension={32} />
           <span className="text-lg font-semibold">Para Po!</span>
         </Link>
-        <div className="flex items-center gap-4 md:hidden">
+        <div className="flex items-center gap-4">
           {status === "authenticated" ? (
             <Link href="/profile">
               <AvatarComponent />
@@ -115,7 +117,8 @@ const NavBar: React.FC = () => {
               className="w-full items-center"
               size="lg"
               variant="outline"
-              onClick={() => signIn('google')}
+              onClick={() => signIn("google")}
+              aria-label="Sign in with Google"
             >
               <FcGoogle className="h-12 w-12" />
               Signin
