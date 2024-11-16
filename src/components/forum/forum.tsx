@@ -110,23 +110,23 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
     }
   };
 
-  const handleScrapeFacebookPosts = async () => {
-    try {
-      const response = await axios.post("/api/fb/scrapper");
-      console.log("Scrape results:", response.data);
-      if (response.data.success) {
-        alert("Facebook posts scraped and saved successfully!");
-      } else {
-        alert(`Failed to scrape some posts: ${response.data.message}`);
-      }
-    } catch (error) {
-      console.error("Error scraping Facebook posts:", error);
-      alert(
-        "Failed to scrape Facebook posts: " +
-          ((error as any).response?.data?.message || (error as any).message)
-      );
-    }
-  };
+  // const handleScrapeFacebookPosts = async () => {
+  //   try {
+  //     const response = await axios.post("/api/fb/scrapper");
+  //     console.log("Scrape results:", response.data);
+  //     if (response.data.success) {
+  //       alert("Facebook posts scraped and saved successfully!");
+  //     } else {
+  //       alert(`Failed to scrape some posts: ${response.data.message}`);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error scraping Facebook posts:", error);
+  //     alert(
+  //       "Failed to scrape Facebook posts: " +
+  //         ((error as any).response?.data?.message || (error as any).message)
+  //     );
+  //   }
+  // };
 
   const featuredPost = featured?.post;
 
