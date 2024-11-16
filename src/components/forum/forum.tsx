@@ -91,7 +91,7 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
     }
 
     try {
-      const response = await axios.post("/forum/post-discussion", {
+      const response = await axios.post("/api/forum/posts", {
         title,
         body,
         tags: tags.split(",").map((tag) => tag.trim()),
@@ -107,27 +107,6 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
     } catch (error) {
       console.error(error);
       alert("Failed to post discussion");
-    }
-  };
-
-  const createPostFromFacebook = async (post: { message: string }) => {
-    if (!session) {
-      console.error("You must be logged in to create a post");
-      return;
-    }
-
-    try {
-      const response = await axios.post("/forum/post-discussion", {
-        title: post.message,
-        body: post.message,
-        tags: ["Facebook"],
-      });
-
-      if (response.status === 201) {
-        console.log("Facebook post created successfully");
-      }
-    } catch (error) {
-      console.error("Failed to create post from Facebook:", error);
     }
   };
 
@@ -240,13 +219,6 @@ const ForumTemplateComponent: React.FC<ForumTemplateProps> = ({
                         Contribute
                       </Button>
                     </DialogTrigger>
-                    <Button
-                      onClick={handleScrapeFacebookPosts}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Scrape Facebook Posts
-                    </Button>
                     <DialogContent className="sm:max-w-[600px] w-full">
                       <DialogHeader>
                         <DialogTitle>Create a New Discussion</DialogTitle>

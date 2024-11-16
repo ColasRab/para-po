@@ -431,8 +431,8 @@ const EcoRoute: React.FC = () => {
 
           const co2Impact =
             mode === TransportMode.CAR
-              ? CO2_EMISSIONS.CAR * distanceKm // Emissions for car
-              : CO2_EMISSIONS.CAR * distanceKm * -1; // Savings for bike/walk
+              ? CO2_EMISSIONS.CAR * distanceKm
+              : CO2_EMISSIONS.CAR * distanceKm * -1;
 
           const duration = (distanceKm / AVERAGE_SPEEDS[mode]) * 60;
 
@@ -453,7 +453,6 @@ const EcoRoute: React.FC = () => {
             }
           );
 
-          // Check for bike lanes
           const hasBikeLane =
             mode === TransportMode.BIKE &&
             coordinates.some((point) =>
@@ -561,16 +560,13 @@ const EcoRoute: React.FC = () => {
         return acc + distance;
       }, 0);
 
-      // Calculate duration based on mode and average speed
-      const duration = (distanceKm / AVERAGE_SPEEDS[mode]) * 60; // Convert to minutes
+      const duration = (distanceKm / AVERAGE_SPEEDS[mode]) * 60;
 
-      // Calculate CO2 impact
       const co2Impact =
         mode === TransportMode.CAR
-          ? CO2_EMISSIONS.CAR * distanceKm // Emissions for car
-          : CO2_EMISSIONS.CAR * distanceKm * -1; // Savings for bike/walk
+          ? CO2_EMISSIONS.CAR * distanceKm
+          : CO2_EMISSIONS.CAR * distanceKm * -1;
 
-      // Generate directions for the route
       const directions = route.coordinates
         .map((coord, index, coords) => {
           if (index === coords.length - 1) return null;
@@ -578,7 +574,7 @@ const EcoRoute: React.FC = () => {
           const direction = getDirection(coord, nextCoord);
           return {
             instruction: direction,
-            distance: getDistance(coord, nextCoord) * 1000, // Convert to meters
+            distance: getDistance(coord, nextCoord) * 1000,
             duration: Math.round(
               (getDistance(coord, nextCoord) / AVERAGE_SPEEDS[mode]) * 60
             ),
@@ -587,7 +583,6 @@ const EcoRoute: React.FC = () => {
         })
         .filter(Boolean) as DirectionStep[];
 
-      // Check for bike lanes
       const hasBikeLane =
         mode === TransportMode.BIKE &&
         route.coordinates.some((point) =>
@@ -615,134 +610,124 @@ const EcoRoute: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-full relative flex">
-      <Card className="w-96 h-full rounded-none shadow-xl z-[1000] overflow-auto">
-        <CardHeader>
-          <CardTitle>Para Po Route</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="p-2 bg-red-100 text-red-700 rounded-md">
-              {error}
-            </div>
-          )}
+    <div className="h-screen w-full relative flex flex-col md:flex-row">
+      <div className="w-full md:w-96 h-auto md:h-full z-[1000] overflow-auto order-2 md:order-1">
+        <Card className="rounded-none shadow-xl h-full">
+          <CardHeader>
+            <CardTitle>Para Po Route</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <div className="p-2 bg-red-100 text-red-700 rounded-md">
+                {error}
+              </div>
+            )}
 
-          <div className="space-y-4">
-            <LocationSearch
-              placeholder="Enter origin location"
-              value={originValue}
-              onChange={setOriginValue}
-              onSelect={setOriginLocation}
-              disabled={isLoading}
-            />
-
-            <LocationSearch
-              placeholder="Enter destination location"
-              value={destinationValue}
-              onChange={setDestinationValue}
-              onSelect={setDestinationLocation}
-              disabled={isLoading}
-            />
-
-            <div className="flex gap-2">
-              {Object.values(TransportMode).map((mode) => (
-                <Button
-                  key={mode}
-                  variant={selectedMode === mode ? "default" : "outline"}
-                  className={`p-2 flex-1 ${
-                    selectedMode === mode
-                      ? "bg-black hover:bg-gray-800"
-                      : "border-black text-black hover:bg-gray-100"
-                  }`}
-                  onClick={() => handleModeChange(mode)}
-                >
-                  {getTransportIcon(mode)}
-                </Button>
-              ))}
-            </div>
-
-            <Button
-              onClick={calculateRoutes}
-              disabled={!originLocation || !destinationLocation || isLoading}
-              className="w-full bg-black hover:bg-gray-800"
-            >
-              Calculate Route
-            </Button>
-
-            <Button
-              onClick={clearRoute}
-              disabled={isLoading}
-              className="w-full bg-gray-300 hover:bg-gray-400"
-            >
-              Clear Route
-            </Button>
-          </div>
-
-          {routeInfo && (
-            <div className="space-y-4 mt-4">
-              <RouteInfoCard
-                icon={getTransportIcon(selectedMode)}
-                title="Distance"
-                value={`${routeInfo.distance} km`}
+            <div className="space-y-4">
+              <LocationSearch
+                placeholder="Enter origin location"
+                value={originValue}
+                onChange={setOriginValue}
+                onSelect={setOriginLocation}
+                disabled={isLoading}
               />
-              <RouteInfoCard
-                icon={<Bus className="w-5 h-5" />}
-                title="Duration"
-                value={`${routeInfo.duration} mins`}
+
+              <LocationSearch
+                placeholder="Enter destination location"
+                value={destinationValue}
+                onChange={setDestinationValue}
+                onSelect={setDestinationLocation}
+                disabled={isLoading}
               />
-              {selectedMode === TransportMode.CAR && (
-                <>
+
+              <div className="flex gap-2">
+                {Object.values(TransportMode).map((mode) => (
+                  <Button
+                    key={mode}
+                    variant={selectedMode === mode ? "default" : "outline"}
+                    className={`p-2 flex-1 ${
+                      selectedMode === mode
+                        ? "bg-black hover:bg-gray-800"
+                        : "border-black text-black hover:bg-gray-100"
+                    }`}
+                    onClick={() => handleModeChange(mode)}
+                  >
+                    {getTransportIcon(mode)}
+                  </Button>
+                ))}
+              </div>
+
+              <Button
+                onClick={calculateRoutes}
+                disabled={!originLocation || !destinationLocation || isLoading}
+                className="w-full bg-black hover:bg-gray-800"
+              >
+                Calculate Route
+              </Button>
+
+              <Button
+                onClick={clearRoute}
+                disabled={isLoading}
+                className="w-full bg-gray-300 hover:bg-gray-400"
+              >
+                Clear Route
+              </Button>
+            </div>
+
+            {routeInfo && (
+              <div className="space-y-4 mt-4">
+                <RouteInfoCard
+                  icon={getTransportIcon(selectedMode)}
+                  title="Distance"
+                  value={`${routeInfo.distance} km`}
+                />
+                <RouteInfoCard
+                  icon={<Bus className="w-5 h-5" />}
+                  title="Duration"
+                  value={`${routeInfo.duration} mins`}
+                />
+                {selectedMode === TransportMode.CAR && (
+                  <>
+                    <RouteInfoCard
+                      icon={<Car className="w-5 h-5" />}
+                      title="Estimated Delay"
+                      value={`${routeInfo.durationInTraffic} mins`}
+                    />
+                    <RouteInfoCard
+                      icon={<Leaf className="w-5 h-5 text-red-500" />}
+                      title="CO2 Emissions"
+                      value={`${Math.abs(routeInfo.co2Impact).toFixed(1)} g`}
+                    />
+                  </>
+                )}
+                {(selectedMode === TransportMode.BIKE ||
+                  selectedMode === TransportMode.WALK) && (
                   <RouteInfoCard
-                    icon={<Car className="w-5 h-5" />}
-                    title="Estimated Delay"
-                    value={`${routeInfo.durationInTraffic} mins`}
-                  />
-                  <RouteInfoCard
-                    icon={<Leaf className="w-5 h-5 text-red-500" />}
-                    title="CO2 Emissions"
+                    icon={<Leaf className="w-5 h-5 text-green-500" />}
+                    title="CO2 Savings"
                     value={`${Math.abs(routeInfo.co2Impact).toFixed(1)} g`}
                   />
-                </>
-              )}
-              {(selectedMode === TransportMode.BIKE ||
-                selectedMode === TransportMode.WALK) && (
-                <RouteInfoCard
-                  icon={<Leaf className="w-5 h-5 text-green-500" />}
-                  title="CO2 Savings"
-                  value={`${Math.abs(routeInfo.co2Impact).toFixed(1)} g`}
-                />
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
-          {routeInfo?.directions && (
-            <div className="space-y-2 mt-6">
-              <h3 className="font-semibold">Directions:</h3>
-              <ul className="list-none list-inside">
-                {routeInfo.directions.map((step, index) => (
-                  <li key={index} className="mb-2">
-                    {step.instruction}
-                    {step.name || "unknown road"} - {step.distance.toFixed(0)}{" "}
-                    meters
-                  </li>
-                ))}
-              </ul>
-              {selectedMode === TransportMode.BIKE && routeInfo.hasBikeLane && (
-                <div className="p-2 mt-4 bg-green-100 text-green-700 rounded-md">
-                  🚴 This route includes bike lanes!
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {selectedMode === TransportMode.BIKE && routeInfo?.hasBikeLane && (
+              <div className="p-2 mt-4 bg-green-100 text-green-700 rounded-md">
+                🚴 This route includes bike lanes!
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      <MapWithNoSSR
-        routes={routes}
-        activeMode={selectedMode}
-        markers={markers}
-        initialConfig={INITIAL_MAP_CONFIG}
-      />
+      <div className="flex-1 h-[50vh] md:h-full w-full order-1 md:order-2">
+        <MapWithNoSSR
+          routes={routes}
+          activeMode={selectedMode}
+          markers={markers}
+          initialConfig={INITIAL_MAP_CONFIG}
+        />
+      </div>
     </div>
   );
 };
