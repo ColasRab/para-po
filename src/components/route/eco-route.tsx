@@ -790,7 +790,7 @@ const EcoRoute: React.FC = () => {
         </div>
 
         {/* Desktop card on top right */}
-        <Card className="hidden md:block absolute top-4 right-4 w-96 z-[1000] shadow-xl">
+        <Card className="hidden md:block absolute top-4 left-4 w-96 z-[1000] shadow-xl">
           <CardHeader>
             <CardTitle>Para Po Route</CardTitle>
           </CardHeader>
